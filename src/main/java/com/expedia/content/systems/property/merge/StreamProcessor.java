@@ -23,9 +23,8 @@ public class StreamProcessor {
     KStreamBuilder builder = new KStreamBuilder();
 
     Properties config = new Properties();
-    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-7");
+    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-9");
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-//    config.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     config.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -33,23 +32,27 @@ public class StreamProcessor {
     Serde<String> stringSerde = Serdes.String();
     KTable<String, String> titleTable = builder.table(stringSerde, stringSerde, TITLE_TOPIC, "title-store");
     KTable<String, String> testTable = builder.table(stringSerde, stringSerde, TEST_TOPIC, "test-store");
+    KTable<String, String> locationTable = builder.table(stringSerde, stringSerde, "location", "location-store");
 
-//    KTable<String, Hotel> sinkResult = titleTable.join(testTable, (title, test) -> {
-//      return new Hotel.HotelBuilder()
-//              .title(title)
-//              .test(test)
-//              .build();
-//    });
-
-    KTable<String, String> sinkResult = titleTable.join(testTable, (title, test) -> {
+    KTable<String, String> intermediateJoin = titleTable.join(testTable, (title, test) -> {
       return new StringBuilder()
               .append(title)
               .append(" ")
               .append(test)
               .toString();
     });
-    sinkResult.to(stringSerde, stringSerde,"final-results");
-    sinkResult.print(stringSerde, stringSerde);
+    KTable<String, String> intermediateResult = intermediateJoin.through("intermediate-results", "intermediate-store");
+    intermediateJoin.print(stringSerde, stringSerde);
+
+    KTable<String, String> finalJoin = locationTable.join(intermediateResult, (title, test) -> {
+      return new StringBuilder()
+              .append(title)
+              .append(" ")
+              .append(test)
+              .toString();
+    });
+    finalJoin.to(stringSerde, stringSerde,"final-results");
+    finalJoin.print(stringSerde, stringSerde);
 
     System.out.println("Starting Kafka Streams Example");
     KafkaStreams kafkaStreams = new KafkaStreams(builder, config);
