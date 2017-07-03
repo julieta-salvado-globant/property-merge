@@ -23,6 +23,7 @@ import java.util.Properties;
 public class StreamProcessorForIncomingStringJson {
   private static final String JSON_TOPIC = "incoming-json";
   private static final String JSON_TOPIC2 = "incoming-json2";
+  private static final String JSON_TOPIC3 = "incoming-json3";
 
   public static void main(String[] args) {
     StreamProcessorForIncomingStringJson processor = new StreamProcessorForIncomingStringJson();
@@ -37,18 +38,24 @@ public class StreamProcessorForIncomingStringJson {
     final Serializer<JsonNode> jsonSerializer = new JsonSerializer();
     // load a simple json deserializer
     final Deserializer<JsonNode> jsonDeserializer = new JsonDeserializer();
-    // use the simple json serializer and deserialzer we just made and load a Serde for streaming data
+    // use the simple json serializer and deserializer we just made and load a Serde for streaming data
     final Serde<JsonNode> jsonSerde = Serdes.serdeFrom(jsonSerializer, jsonDeserializer);
 
-    KTable<String, JsonNode> rawTable1 = builder.table(stringSerde, jsonSerde, JSON_TOPIC, "json-store1");
-    KTable<String, JsonNode> rawTable2 = builder.table(stringSerde, jsonSerde, JSON_TOPIC2, "json-store2");
+    KTable<String, JsonNode> rawTable1 = builder.table(stringSerde, jsonSerde, JSON_TOPIC, "json-store-1");
+    KTable<String, JsonNode> rawTable2 = builder.table(stringSerde, jsonSerde, JSON_TOPIC2, "json-store-2");
 
     KTable<String, JsonNode> intermediateJoin = rawTable1
             .join(rawTable2, JoinResult::new)
-            .mapValues(v -> mergeJsonObjects(v.getElement1(), v.getElement2()))
-            /*.through("intermediate-results", "intermediate-store")*/;
+            .mapValues(v -> mergeJsonObjects(v.getElement1(), v.getElement2()));
     intermediateJoin.print(stringSerde, jsonSerde);
-    intermediateJoin.to(stringSerde, jsonSerde, "json-merge");
+    KTable<String, JsonNode> intermediateResult = intermediateJoin.through(stringSerde, jsonSerde, "intermediate-json", "intermediate-json-store");
+
+    KTable<String, JsonNode> rawTable3 = builder.table(stringSerde, jsonSerde, JSON_TOPIC3, "json-store-3");
+    KTable<String, JsonNode> finalJoin = rawTable3
+            .join(intermediateResult, JoinResult::new)
+            .mapValues(v -> mergeJsonObjects(v.getElement1(), v.getElement2()));
+    finalJoin.print(stringSerde, jsonSerde);
+    finalJoin.to(stringSerde, jsonSerde, "final-result");
 
     initStream(builder, stringSerde, jsonSerde);
   }
@@ -95,7 +102,7 @@ public class StreamProcessorForIncomingStringJson {
   }
 
   private void initStream(KStreamBuilder builder, Serde<String> stringSerde, Serde<JsonNode> jsonNodeSerde) {
-    KafkaStreams kafkaStreams = new KafkaStreams(builder, getProperties(jsonNodeSerde));
+    KafkaStreams kafkaStreams = new KafkaStreams(builder, getProperties());
     kafkaStreams.setUncaughtExceptionHandler((thread, e) -> {
       System.out.println(
               "Kafka Stream Failure! -- ThreadName=" + thread.getName() + " -- ThreadId=" + thread.getId() + " -- Reason =" + e.getMessage());
@@ -113,9 +120,9 @@ public class StreamProcessorForIncomingStringJson {
     }));
   }
 
-  private Properties getProperties(Serde<JsonNode> jsonNodeSerde) {
+  private Properties getProperties() {
     Properties config = new Properties();
-    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-12");
+    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-17");
     config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
