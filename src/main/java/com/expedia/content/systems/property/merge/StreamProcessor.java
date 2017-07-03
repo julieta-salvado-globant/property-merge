@@ -13,6 +13,10 @@ import java.util.Properties;
 public class StreamProcessor {
   private static final String TITLE_TOPIC = "title";
   private static final String TEST_TOPIC = "test";
+  private static final String LOCATION_TOPIC = "location";
+  private static final String TITLE_STORE = "title-store";
+  private static final String TEST_STORE = "test-store";
+  private static final String LOCATION_STORE = "location-store";
 
   public static void main(String[] args) {
     StreamProcessor processor = new StreamProcessor();
@@ -21,18 +25,12 @@ public class StreamProcessor {
 
   private void start() {
     KStreamBuilder builder = new KStreamBuilder();
-
-    Properties config = new Properties();
-    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-9");
-    config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-    config.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-
     Serde<String> stringSerde = Serdes.String();
-    KTable<String, String> titleTable = builder.table(stringSerde, stringSerde, TITLE_TOPIC, "title-store");
-    KTable<String, String> testTable = builder.table(stringSerde, stringSerde, TEST_TOPIC, "test-store");
-    KTable<String, String> locationTable = builder.table(stringSerde, stringSerde, "location", "location-store");
+    
+
+    KTable<String, String> titleTable = builder.table(stringSerde, stringSerde, TITLE_TOPIC, TITLE_STORE);
+    KTable<String, String> testTable = builder.table(stringSerde, stringSerde, TEST_TOPIC, TEST_STORE);
+    KTable<String, String> locationTable = builder.table(stringSerde, stringSerde, LOCATION_TOPIC, LOCATION_STORE);
 
     KTable<String, String> intermediateJoin = titleTable.join(testTable, (title, test) -> {
       return new StringBuilder()
@@ -54,8 +52,11 @@ public class StreamProcessor {
     finalJoin.to(stringSerde, stringSerde,"final-results");
     finalJoin.print(stringSerde, stringSerde);
 
-    System.out.println("Starting Kafka Streams Example");
-    KafkaStreams kafkaStreams = new KafkaStreams(builder, config);
+    initStream(builder, stringSerde);
+  }
+
+  private void initStream(KStreamBuilder builder, Serde<String> stringSerde) {
+    KafkaStreams kafkaStreams = new KafkaStreams(builder, getProperties());
     kafkaStreams.setUncaughtExceptionHandler((thread, e) -> {
       System.out.println(
               "Kafka Stream Failure! -- ThreadName=" + thread.getName() + " -- ThreadId=" + thread.getId() + " -- Reason =" + e.getMessage());
@@ -69,5 +70,15 @@ public class StreamProcessor {
       kafkaStreams.close();
       stringSerde.close();
     }));
+  }
+
+  private Properties getProperties() {
+    Properties config = new Properties();
+    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "hello-kafka-streams-9");
+    config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    config.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+    return config;
   }
 }
