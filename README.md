@@ -91,7 +91,7 @@ The separator symbol can be defined: in this case, key and value are separated b
 Two alternative stream processors are included in the code.
  
 ## First version
-The code includes a simple `StreamProcessor` that joins strings from three topics (“title”, “test” and “location”) and concatenates those strings when one of them changes.
+The code includes a simple `StreamProcessingApplication` that joins strings from three topics (“title”, “test” and “location”) and concatenates those strings when one of them changes.
  
 ### How to see it working?
 
@@ -120,8 +120,8 @@ hotel1-Hotel Star
  
 In the previous example, two messages were sent (message 1: hotel3-Grand Hotel; message 2: hotel1-Hotel Star).
 
-* Run the StreamProcessor via  
-`com.expedia.content.systems.property.merge.StreamProcessor`
+* Run the Stream Processing Application via  
+`com.expedia.content.systems.property.merge.StreamProcessingApp`
  
 * This processor includes a print stage, but you can also create a consumer to get the merging result. 
     1. Create a topic for "final-results"
@@ -152,10 +152,15 @@ Example messages:
 hotel1-{“title”: “Grand Hotel”}
  ```
  
-* Run the StreamProcessor via `com.expedia.content.systems.property.merge.StreamProcessorForIncomingStringJson`
+* Run the Stream Processing Application via `com.expedia.content.systems.property.merge.StreamProcessingAppForIncomingStringJson`
  
 * This processor includes a print stage, but you can also create a consumer to get the merging result.
  
     1. Create a topic for "final-result"
     2. Create a consumer via command line using: `bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic final-result --property print.key=true --property key.separator="-" --from-beginning`
+    
+For this last example, the following image explains the implemented topology:
+
+![example-topology](https://github.com/julieta-salvado-globant/property-merge/blob/master/imgs/kafka-stream-topology.png)
+
 
