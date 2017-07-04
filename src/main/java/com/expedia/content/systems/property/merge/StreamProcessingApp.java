@@ -10,7 +10,7 @@ import org.apache.kafka.streams.kstream.KTable;
 
 import java.util.Properties;
 
-public class StreamProcessor {
+public class StreamProcessingApp {
   private static final String TITLE_TOPIC = "title";
   private static final String TEST_TOPIC = "test";
   private static final String LOCATION_TOPIC = "location";
@@ -19,7 +19,7 @@ public class StreamProcessor {
   private static final String LOCATION_STORE = "location-store";
 
   public static void main(String[] args) {
-    StreamProcessor processor = new StreamProcessor();
+    StreamProcessingApp processor = new StreamProcessingApp();
     processor.start();
   }
 

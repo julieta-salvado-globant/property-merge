@@ -20,13 +20,18 @@ import org.apache.kafka.streams.kstream.KTable;
 import java.util.Iterator;
 import java.util.Properties;
 
-public class StreamProcessorForIncomingStringJson {
+public class StreamProcessingAppForIncomingStringJson {
   private static final String JSON_TOPIC = "incoming-json";
   private static final String JSON_TOPIC2 = "incoming-json2";
   private static final String JSON_TOPIC3 = "incoming-json3";
+  private static final String JSON_STORE_1 = "json-store-1";
+  private static final String JSON_STORE_2 = "json-store-2";
+  private static final String JSON_STORE_3 = "json-store-3";
+  private static final String INTERMEDIATE_JSON_STORE = "intermediate-json-store";
+  private static final String INTERMEDIATE_JSON_TOPIC = "intermediate-json";
 
   public static void main(String[] args) {
-    StreamProcessorForIncomingStringJson processor = new StreamProcessorForIncomingStringJson();
+    StreamProcessingAppForIncomingStringJson processor = new StreamProcessingAppForIncomingStringJson();
     processor.start();
   }
 
@@ -41,16 +46,16 @@ public class StreamProcessorForIncomingStringJson {
     // use the simple json serializer and deserializer we just made and load a Serde for streaming data
     final Serde<JsonNode> jsonSerde = Serdes.serdeFrom(jsonSerializer, jsonDeserializer);
 
-    KTable<String, JsonNode> rawTable1 = builder.table(stringSerde, jsonSerde, JSON_TOPIC, "json-store-1");
-    KTable<String, JsonNode> rawTable2 = builder.table(stringSerde, jsonSerde, JSON_TOPIC2, "json-store-2");
+    KTable<String, JsonNode> rawTable1 = builder.table(stringSerde, jsonSerde, JSON_TOPIC, JSON_STORE_1);
+    KTable<String, JsonNode> rawTable2 = builder.table(stringSerde, jsonSerde, JSON_TOPIC2, JSON_STORE_2);
 
     KTable<String, JsonNode> intermediateJoin = rawTable1
             .join(rawTable2, JoinResult::new)
             .mapValues(v -> mergeJsonObjects(v.getElement1(), v.getElement2()));
     intermediateJoin.print(stringSerde, jsonSerde);
-    KTable<String, JsonNode> intermediateResult = intermediateJoin.through(stringSerde, jsonSerde, "intermediate-json", "intermediate-json-store");
+    KTable<String, JsonNode> intermediateResult = intermediateJoin.through(stringSerde, jsonSerde, INTERMEDIATE_JSON_TOPIC, INTERMEDIATE_JSON_STORE);
 
-    KTable<String, JsonNode> rawTable3 = builder.table(stringSerde, jsonSerde, JSON_TOPIC3, "json-store-3");
+    KTable<String, JsonNode> rawTable3 = builder.table(stringSerde, jsonSerde, JSON_TOPIC3, JSON_STORE_3);
     KTable<String, JsonNode> finalJoin = rawTable3
             .join(intermediateResult, JoinResult::new)
             .mapValues(v -> mergeJsonObjects(v.getElement1(), v.getElement2()));
