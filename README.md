@@ -88,7 +88,7 @@ The separator symbol can be defined: in this case, key and value are separated b
 [Confluent](https://www.confluent.io) provides Cloud Kafka and Avro support. Anyway, bat files do not work in the official release. You can find an improvement release here (but you can’t start the schema-registry): https://github.com/renukaradhya/confluentplatform
  
 # POC code
-Two alternative stream processors are included in the code.
+Two alternative stream processing applications are included in the code.
  
 ## First version
 The code includes a simple `StreamProcessingApplication` that joins strings from three topics (“title”, “test” and “location”) and concatenates those strings when one of them changes.
