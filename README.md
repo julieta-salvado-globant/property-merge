@@ -15,7 +15,7 @@ Kafka console tools can be found at Kafka source folder inside “bin” for Lin
  
 The page below explains the available commands in Kafka console tools:
 
-(http://www.javashuo.com/content/p-6671249.html) (I could not a better source)
+(http://www.javashuo.com/content/p-6671249.html) (I could not find a better source)
  
 ## Kafka Streams
 This site displays the official Kafka Streams Documentation: https://kafka.apache.org/documentation/streams
@@ -35,7 +35,7 @@ Some best practices details can be found at
 https://community.hortonworks.com/articles/49789/kafka-best-practices.html
  
 ## Useful commands
-Below a list of useful commands for Kafka console tools.
+Below you can find a list of useful commands for Kafka console tools.
  
 ### Start zookeeper
 
@@ -50,9 +50,10 @@ By default, Zookeeper starts at port 2181.
 bin\windows\kafka-server-start.bat config\server.properties
 ```
  
-By default, Kafka Broker starts at por 9092.
+By default, Kafka Broker starts at port 9092.
  
-### Create a topic (“test” topic in the example)
+### Create a topic
+In the next example, a topic named “test” is created:
 ```
 bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
 ```
@@ -98,7 +99,7 @@ The code includes a simple `StreamProcessingApplication` that joins strings from
 Steps:
 * Start Zookeeper and Kafka Broker.
 * Using the topic script, create topics for “title”, “test” and “location”.
-* Start a producer for each topic with an individual command line for each one:
+* Start a producer for each topic with an individual command line window for each one:
 
  ```
  bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic title --property "parse.key=true" --property key.separator="-"
@@ -110,7 +111,7 @@ bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic test
 bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic location --property "parse.key=true" --property key.separator="-"
  ```
  
- After each initiation, the producer command line will wait for messages. Example:
+ After each initiation, the producer command line window will wait for messages. Example:
  
  ```
  bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic title --property "parse.key=true" --property key.separator="-"
@@ -123,12 +124,12 @@ In the previous example, two messages were sent (message 1: hotel3-Grand Hotel; 
 * Run the Stream Processing Application via  
 `com.expedia.content.systems.property.merge.StreamProcessingApp`
  
-* This processor includes a print stage, but you can also create a consumer to get the merging result. 
+* This processing application includes a print stage, but you can also create a consumer to get the merged result. 
     1. Create a topic for "final-results"
     2. Create a consumer via command line using: `bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic final-results --property print.key=true --property key.separator="-" --from-beginning`
  
 ## Second version
-A more complex example can be found with the name `StreamProcessorForIncomingStringJson`. As the previous processor, it waits for changes in three topics but works with json values. When a change appears in one of these topics, the updated key-value pair will trigger the processor activity. The key will be used to find the pairing key-value pair at the other two topics (they are KTable so they work as changelogs) and the updated value will be merge with the values in the not-updated topics. The result will be streamed to a new topic.
+A more complex example can be found with the name `StreamProcessingAppForIncomingStringJson`. As the previous processing app, it waits for changes in three topics but works with json values. When a change appears in one of these topics, the updated key-value pair will trigger the processor activity. The key will be used to find the pairing key-value pair at the other two topics (they are KTable so they work as updates in a database) and the updated value will be merge with the values in the not-updated topics. The result will be streamed to a new topic.
  
 ### How to see it working?
 
@@ -154,7 +155,7 @@ hotel1-{“title”: “Grand Hotel”}
  
 * Run the Stream Processing Application via `com.expedia.content.systems.property.merge.StreamProcessingAppForIncomingStringJson`
  
-* This processor includes a print stage, but you can also create a consumer to get the merging result.
+* This processing app includes a print stage, but you can also create a consumer to get the merging result.
  
     1. Create a topic for "final-result"
     2. Create a consumer via command line using: `bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic final-result --property print.key=true --property key.separator="-" --from-beginning`
